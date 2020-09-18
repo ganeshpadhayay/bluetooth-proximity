@@ -17,11 +17,10 @@ import android.content.Context;
 import android.os.ParcelUuid;
 import android.util.Log;
 
-import com.example.bluetoothproximity.util.Constants;
 import com.example.bluetoothproximity.background.BluetoothServiceUtility;
+import com.example.bluetoothproximity.util.Constants;
 
 import java.util.UUID;
-
 
 public class GattServer {
     private String TAG = this.getClass().getName();
@@ -78,7 +77,7 @@ public class GattServer {
             if (defaultAdapter == null) {
                 return;
             }
-            String uniqueId = "121";
+            String uniqueId = Constants.NOTIFICATION_CHANNEL_UNIQUE_ID;
             if (uniqueId.isEmpty()) {
                 return;
             }
@@ -139,7 +138,7 @@ public class GattServer {
         BluetoothGattCharacteristic uniqueIdChar = new BluetoothGattCharacteristic(UUID.fromString(Constants.DID_UUID),
                 BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY,
                 BluetoothGattCharacteristic.PERMISSION_READ);
-        String uniqueId = "121";
+        String uniqueId = Constants.NOTIFICATION_CHANNEL_UNIQUE_ID;
         uniqueIdChar.setValue(uniqueId);
 
         //Adding this for iOS continuous ping

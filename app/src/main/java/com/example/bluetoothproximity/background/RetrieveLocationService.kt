@@ -10,7 +10,6 @@ import com.example.bluetoothproximity.util.Constants
 import com.google.android.gms.location.*
 
 class RetrieveLocationService {
-
     companion object {
         private const val UPDATE_INTERVAL: Long = 30 * 60 * 1000  /* 30 min */
         private const val FASTEST_INTERVAL: Long = 5 * 60 * 1000 /* 5 min */

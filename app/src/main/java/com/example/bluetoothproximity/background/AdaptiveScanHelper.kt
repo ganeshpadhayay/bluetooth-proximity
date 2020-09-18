@@ -11,7 +11,6 @@ import java.util.*
 
 /**
  * This is a helper class used to change BluetoothLE Scan and advertisement mode using and adaptive algorithm
- * @author Punit Chhajer
  */
 class AdaptiveScanHelper(private val listener: AdaptiveModeListener) {
 

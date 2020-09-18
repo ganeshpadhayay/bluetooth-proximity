@@ -8,7 +8,6 @@ class MyApplication : Application() {
     companion object {
         lateinit var context: MyApplication
         lateinit var lastKnownLocation: Location
-
         fun setLocation(lastLocation: Location) {
             lastKnownLocation = lastLocation
         }

@@ -7,6 +7,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.os.Build
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
@@ -25,17 +27,15 @@ object BluetoothServiceUtility {
 
     fun startBackgroundWorker() {
         val workManager = WorkManager.getInstance(MyApplication.context)
-        val workRequest = PeriodicWorkRequest.Builder(BackgroundWorker::class.java, 16, TimeUnit.MINUTES).build()
-        workManager.enqueueUniquePeriodicWork(BackgroundWorker.UNIQUE_WORK_NAME, ExistingPeriodicWorkPolicy.REPLACE, workRequest
+        val workRequest = PeriodicWorkRequest.Builder(BluetoothBackgroundWorker::class.java, 16, TimeUnit.MINUTES).build()
+        workManager.enqueueUniquePeriodicWork(BluetoothBackgroundWorker.UNIQUE_WORK_NAME, ExistingPeriodicWorkPolicy.REPLACE, workRequest
         )
     }
 
     fun isBluetoothAvailable(): Boolean {
         if (isBluetoothPermissionAvailable(MyApplication.context)) {
             val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-            return bluetoothAdapter != null &&
-                    bluetoothAdapter.isEnabled &&
-                    bluetoothAdapter.state == BluetoothAdapter.STATE_ON
+            return bluetoothAdapter != null && bluetoothAdapter.isEnabled && bluetoothAdapter.state == BluetoothAdapter.STATE_ON
         }
         return false
     }
@@ -63,17 +63,63 @@ object BluetoothServiceUtility {
         return (gpsEnabled || networkEnabled)
     }
 
+    fun isGPSEnabled(context: Context): Boolean {
+        var gpsEnabled = false
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+        try {
+            gpsEnabled = locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) ?: false
+        } catch (e: Exception) {
+        }
+        return gpsEnabled
+    }
+
     fun getNotificationChannel(): String {
         return Constants.NOTIFICATION_CHANNEL
     }
 
     fun startService(activity: Activity) {
         if (!BluetoothScanningService.serviceRunning) {
-            val uniqueId = "121"
+            val uniqueId = Constants.NOTIFICATION_CHANNEL_UNIQUE_ID
             if (uniqueId.isNotEmpty() && !activity.isFinishing) {
                 val intent = Intent(activity, BluetoothScanningService::class.java)
                 ContextCompat.startForegroundService(activity, intent)
             }
         }
     }
+
+    fun requestPermissions(context: Activity, permissionRequestCode: Int) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ActivityCompat.requestPermissions(context,
+                    arrayOf(
+                            Manifest.permission.BLUETOOTH,
+                            Manifest.permission.BLUETOOTH_ADMIN,
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    ),
+                    permissionRequestCode)
+        } else {
+            ActivityCompat.requestPermissions(context,
+                    arrayOf(
+                            Manifest.permission.BLUETOOTH,
+                            Manifest.permission.BLUETOOTH_ADMIN,
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                    ),
+                    permissionRequestCode)
+        }
+    }
+
+    fun arePermissionsGranted(context: Context): Boolean {
+        val permission1 = ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH)
+        val permission2 = ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADMIN)
+        val coarseLocation = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
+        val gpsPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+        val locPermission = if (coarseLocation == PackageManager.PERMISSION_GRANTED || gpsPermission == PackageManager.PERMISSION_GRANTED) PackageManager.PERMISSION_GRANTED else -1
+        if (permission1 != PackageManager.PERMISSION_GRANTED || permission2 != PackageManager.PERMISSION_GRANTED || locPermission != PackageManager.PERMISSION_GRANTED) {
+            return false
+        }
+        return true
+    }
+
 }

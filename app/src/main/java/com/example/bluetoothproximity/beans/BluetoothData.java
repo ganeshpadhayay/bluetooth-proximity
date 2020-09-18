@@ -8,21 +8,14 @@ public class BluetoothData {
 
     // This is not MAC Address. This is UNIQUE ID Assign to scanned device.
     private String bluetoothMacAddress;
-
     // This is the RSSI of the scanned device.
     private Integer distance;
-
     private String txPower;
-
     private String txPowerLevel;
-
     private double latitude;
-
     private double longitude;
-
     private Integer timeStamp;
-
-
+    
     public BluetoothData(String bluetoothMacAddress, Integer distance, String txPower, String txPowerLevel) {
         this.bluetoothMacAddress = bluetoothMacAddress;
         this.distance = distance;

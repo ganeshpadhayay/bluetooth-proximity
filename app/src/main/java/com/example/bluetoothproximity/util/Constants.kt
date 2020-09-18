@@ -10,4 +10,7 @@ object Constants {
     const val PLEASE_ALLOW_BLUETOOTH = "Bluetooth must be ON at all times to give you accurate safety updates."
     const val PLEASE_ALLOW_LOCATION = "Location must be ON at all times to give you accurate safety updates."
     const val NOTIFICATION_CHANNEL = "cor_notification_channel"
+    const val NOTIFICATION_CHANNEL_UNIQUE_ID = "121"
+    const val BLUETOOTH_UNIQUE_NAME = "ganesh_bluetooth"
+    const val GPS_REQUEST = 1004
 }

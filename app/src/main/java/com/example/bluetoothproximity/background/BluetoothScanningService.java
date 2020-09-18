@@ -9,7 +9,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
@@ -20,8 +19,8 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.ParcelUuid;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -39,22 +38,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
 
 public class BluetoothScanningService extends Service implements AdaptiveScanHelper.AdaptiveModeListener {
 
     private RetrieveLocationService retrieveLocationService;
+
     private BluetoothLeScanner mBluetoothLeScanner;
+
     private AdaptiveScanHelper mAdaptiveScanHelper;
+
     private List<String> mData = new ArrayList<>();
 
     private static final int FIVE_MINUTES = 5 * 60 * 1000;
+
     private long searchTimestamp;
 
     private final GattServer mGattServer = new GattServer();
 
-    private static final int NOTIF_ID = 1973;
-    private String TAG = this.getClass().getName();
+    private static final int NOTIFICATION_ID = 1973;
+
+    private String TAG = "BluetoothScanningService";
+
     private ScanCallback mScanCallback = new ScanCallback() {
 
         @Override
@@ -62,7 +66,7 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
             super.onScanResult(callbackType, result);
             Log.d(TAG, "onScanResult : Scanning : " + result.getDevice().getName());
             if (BluetoothServiceUtility.INSTANCE.isBluetoothPermissionAvailable(MyApplication.context)) {
-                if (result == null || result.getDevice() == null || result.getDevice().getName() == null)
+                if (result.getDevice() == null || result.getDevice().getName() == null)
                     return;
                 String deviceName = result.getDevice().getName();
                 clearList();
@@ -70,7 +74,6 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
                 if (mData.contains(deviceName)) {
                     return;
                 }
-
                 String txPower = Constants.EMPTY;
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                     txPower = String.valueOf(result.getTxPower());
@@ -107,7 +110,7 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
         super.onCreate();
         createNotificationChannel();
         Notification notification = getNotification(Constants.NOTIFICATION_DESC);
-        startForeground(NOTIF_ID, notification);
+        startForeground(NOTIFICATION_ID, notification);
         searchTimestamp = System.currentTimeMillis();
     }
 
@@ -167,10 +170,7 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
         if (mBluetoothLeScanner == null) {
             return;
         }
-        List<ScanFilter> filters = new ArrayList<>();
 
-        ScanFilter filter = new ScanFilter.Builder().setServiceUuid(new ParcelUuid(UUID.fromString(Constants.SERVICE_UUID))).build();
-        filters.add(filter);
         ScanSettings.Builder settings = new ScanSettings.Builder().setScanMode(scanMode);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -182,7 +182,7 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
         }
         try {
             if (isBluetoothAvailable()) {
-                mBluetoothLeScanner.startScan(filters, settings.build(), mScanCallback);
+                mBluetoothLeScanner.startScan(mScanCallback);
             } else {
                 Log.e(TAG, "startingScan failed : Bluetooth not available");
             }
@@ -201,14 +201,13 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
      */
     void storeDetectedUserDeviceInDB(BluetoothModel bluetoothModel) {
         if (bluetoothModel != null) {
-            BluetoothData bluetoothData = new BluetoothData(bluetoothModel.getAddress(), bluetoothModel.getRssi(),
-                    bluetoothModel.getTxPower(), bluetoothModel.getTxPowerLevel());
+            BluetoothData bluetoothData = new BluetoothData(bluetoothModel.getAddress(), bluetoothModel.getRssi(), bluetoothModel.getTxPower(), bluetoothModel.getTxPowerLevel());
             Location loc = MyApplication.lastKnownLocation;
             if (loc != null) {
                 bluetoothData.setLatitude(loc.getLatitude());
                 bluetoothData.setLongitude(loc.getLongitude());
             }
-            //todo store somewhere
+            Toast.makeText(this, "Bluetooth Data: " + bluetoothData.toString(), Toast.LENGTH_SHORT).show();
         }
 
     }
@@ -238,7 +237,7 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
         } else {
             notification = getNotification(Constants.NOTIFICATION_DESC);
         }
-        startForeground(NOTIF_ID, notification);
+        startForeground(NOTIFICATION_ID, notification);
     }
 
     private Notification getNotification(String notificationDescText) {
@@ -379,9 +378,8 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
 
     private void updateNotification(Notification notification) {
         final NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
         if (notificationManager != null) {
-            notificationManager.notify(NOTIF_ID, notification);
+            notificationManager.notify(NOTIFICATION_ID, notification);
         }
     }
 

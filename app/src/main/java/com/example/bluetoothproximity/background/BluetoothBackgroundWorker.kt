@@ -8,7 +8,8 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.example.bluetoothproximity.util.Constants
 
-class BackgroundWorker(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
+class BluetoothBackgroundWorker(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
+
     private val mContext: Context = context
 
     override fun doWork(): Result {
@@ -22,7 +23,7 @@ class BackgroundWorker(context: Context, workerParams: WorkerParameters) : Worke
     }
 
     private fun startService(intent: Intent) {
-        val uniqueId = "121"
+        val uniqueId = Constants.NOTIFICATION_CHANNEL_UNIQUE_ID
         if (!BluetoothScanningService.serviceRunning && uniqueId.isNotEmpty()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 mContext.startForegroundService(intent)
@@ -33,6 +34,6 @@ class BackgroundWorker(context: Context, workerParams: WorkerParameters) : Worke
     }
 
     companion object {
-        val UNIQUE_WORK_NAME = BackgroundWorker::class.java.simpleName
+        val UNIQUE_WORK_NAME = "BackgroundWorker"
     }
 }
