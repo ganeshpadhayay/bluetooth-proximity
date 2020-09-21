@@ -9,8 +9,9 @@ class GTMController {
         }
     }
 
+    //300 seconds
     fun getScanPollTime(): Long {
-        return 60 * 1000
+        return 300
     }
 
     fun isAdaptiveScanEnabled(): Boolean {

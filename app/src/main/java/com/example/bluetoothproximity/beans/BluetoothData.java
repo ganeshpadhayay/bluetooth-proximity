@@ -5,7 +5,6 @@ import com.example.bluetoothproximity.background.BluetoothServiceUtility;
 
 public class BluetoothData {
     private int id;
-
     // This is not MAC Address. This is UNIQUE ID Assign to scanned device.
     private String bluetoothMacAddress;
     // This is the RSSI of the scanned device.
@@ -86,5 +85,19 @@ public class BluetoothData {
 
     public void setTimeStamp(Integer timeStamp) {
         this.timeStamp = timeStamp;
+    }
+
+    @Override
+    public String toString() {
+        return "BluetoothData{" +
+                "id=" + id +
+                ", bluetoothMacAddress='" + bluetoothMacAddress + '\'' +
+                ", distance=" + distance +
+                ", txPower='" + txPower + '\'' +
+                ", txPowerLevel='" + txPowerLevel + '\'' +
+                ", latitude=" + latitude +
+                ", longitude=" + longitude +
+                ", timeStamp=" + timeStamp +
+                '}';
     }
 }

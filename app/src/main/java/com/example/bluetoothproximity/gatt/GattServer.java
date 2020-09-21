@@ -23,7 +23,7 @@ import com.example.bluetoothproximity.util.Constants;
 import java.util.UUID;
 
 public class GattServer {
-    private String TAG = this.getClass().getName();
+    private String TAG = "BluetoothScanningService";
     private Context mContext;
 
     private BluetoothLeAdvertiser advertiser;
@@ -67,20 +67,19 @@ public class GattServer {
 
 
     public void onCreate(Context context) throws RuntimeException {
+        Log.d(TAG, "in onCreate of GattServer");
         mContext = context;
         mBluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
     }
 
     public void advertise(int advertisementMode) {
+        Log.d(TAG, "in advertise of GattServer");
         try {
             BluetoothAdapter defaultAdapter = BluetoothAdapter.getDefaultAdapter();
             if (defaultAdapter == null) {
                 return;
             }
-            String uniqueId = Constants.NOTIFICATION_CHANNEL_UNIQUE_ID;
-            if (uniqueId.isEmpty()) {
-                return;
-            }
+            String uniqueId = Constants.BLUETOOTH_NAME_UNIQUE_ID;
             if (!uniqueId.equalsIgnoreCase(defaultAdapter.getName())) {
                 stopAdvertising();
             }
@@ -114,6 +113,7 @@ public class GattServer {
     }
 
     private void startAdvertising(AdvertiseSettings.Builder settingsBuilder, AdvertiseData data, boolean isConnectable) {
+        Log.d(TAG, "in startAdvertising of GattServer");
         settingsBuilder.setConnectable(isConnectable);
         if (BluetoothServiceUtility.INSTANCE.isBluetoothAvailable() && advertiser != null && advertisingCallback != null) {
             advertiser.startAdvertising(settingsBuilder.build(), data, advertisingCallback);
@@ -123,6 +123,7 @@ public class GattServer {
     }
 
     public void addGattService() {
+        Log.d(TAG, "in addGattService of GattServer");
         if (BluetoothServiceUtility.INSTANCE.isBluetoothAvailable() && isServerStarted()) {
             try {
                 mBluetoothGattServer.addService(createGattService());
@@ -133,12 +134,13 @@ public class GattServer {
     }
 
     private BluetoothGattService createGattService() {
+        Log.d(TAG, "in createGattService of GattServer");
         BluetoothGattService service = new BluetoothGattService(UUID.fromString(Constants.SERVICE_UUID), BluetoothGattService.SERVICE_TYPE_PRIMARY);
 
         BluetoothGattCharacteristic uniqueIdChar = new BluetoothGattCharacteristic(UUID.fromString(Constants.DID_UUID),
                 BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY,
                 BluetoothGattCharacteristic.PERMISSION_READ);
-        String uniqueId = Constants.NOTIFICATION_CHANNEL_UNIQUE_ID;
+        String uniqueId = Constants.BLUETOOTH_NAME_UNIQUE_ID;
         uniqueIdChar.setValue(uniqueId);
 
         //Adding this for iOS continuous ping
@@ -154,6 +156,7 @@ public class GattServer {
     }
 
     public void onDestroy() {
+        Log.d(TAG, "in onDestroy of GattServer");
         if (mContext != null) {
             if (BluetoothServiceUtility.INSTANCE.isBluetoothAvailable()) {
                 stopServer();
@@ -163,6 +166,7 @@ public class GattServer {
     }
 
     public void stopServer() {
+        Log.d(TAG, "in stopServer of GattServer");
         try {
             if (mBluetoothGattServer != null) {
                 mBluetoothGattServer.clearServices();
@@ -185,6 +189,7 @@ public class GattServer {
     }
 
     public void stopAdvertising() {
+        Log.d(TAG, "in stopAdvertising of GattServer");
         try {
             if (advertiser != null) {
                 advertiser.stopAdvertising(advertisingCallback);

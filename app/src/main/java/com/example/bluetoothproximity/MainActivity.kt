@@ -33,11 +33,6 @@ class MainActivity : AppCompatActivity() {
 
         //check all the permissions and all
         handlePermissionsFlow()
-
-        //check for GPS location
-        if (!BluetoothServiceUtility.isGPSEnabled(this)) {
-            enableGPSLocation()
-        }
     }
 
     private fun handlePermissionsFlow() {
@@ -62,7 +57,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun initBluetoothAndLocationServices() {
         if (BluetoothServiceUtility.arePermissionsGranted(this)) {
-            startBluetoothServiceAndWorkManager()
+            if (!BluetoothServiceUtility.isGPSEnabled(this)) {
+                enableGPSLocation()
+            } else {
+                startBluetoothServiceAndWorkManager()
+            }
         } else {
             BluetoothServiceUtility.requestPermissions(this, BLUETOOTH_LOCATION_PERMISSION)
         }
@@ -77,7 +76,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setBluetoothName() {
         val defaultAdapter = BluetoothAdapter.getDefaultAdapter()
-        val uniqueId = Constants.BLUETOOTH_UNIQUE_NAME
+        val uniqueId = Constants.BLUETOOTH_NAME_UNIQUE_ID           //this could be the username as they will always be unique
         if (uniqueId.isNotEmpty()) {
             if (BluetoothServiceUtility.isBluetoothPermissionAvailable(MyApplication.context) && defaultAdapter != null && uniqueId.isNotEmpty()) {
                 defaultAdapter.name = uniqueId
@@ -105,9 +104,7 @@ class MainActivity : AppCompatActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         if (requestCode == BLUETOOTH_LOCATION_PERMISSION) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                if (!BluetoothServiceUtility.isGPSEnabled(this)) {
-                    enableGPSLocation()
-                }
+                initBluetoothAndLocationServices()
             }
         }
     }
@@ -122,5 +119,4 @@ class MainActivity : AppCompatActivity() {
     private fun showToast(message: String, interval: Int = Toast.LENGTH_SHORT) {
         Toast.makeText(this, message, interval).show()
     }
-
 }

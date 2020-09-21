@@ -20,7 +20,6 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -30,6 +29,7 @@ import com.example.bluetoothproximity.MyApplication;
 import com.example.bluetoothproximity.R;
 import com.example.bluetoothproximity.beans.BluetoothData;
 import com.example.bluetoothproximity.beans.BluetoothModel;
+import com.example.bluetoothproximity.gatt.GattClient;
 import com.example.bluetoothproximity.gatt.GattServer;
 import com.example.bluetoothproximity.util.Constants;
 import com.example.bluetoothproximity.util.GTMController;
@@ -54,10 +54,13 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
     private long searchTimestamp;
 
     private final GattServer mGattServer = new GattServer();
+    private final GattClient mGattClient = new GattClient();
 
     private static final int NOTIFICATION_ID = 1973;
 
     private String TAG = "BluetoothScanningService";
+
+    private Context mContext;
 
     private ScanCallback mScanCallback = new ScanCallback() {
 
@@ -86,6 +89,7 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
                 mData.add(deviceName);
                 storeDetectedUserDeviceInDB(bluetoothModel);
                 Log.d(TAG, "onScanResult : Information Updated, Device : " + deviceName);
+                mGattClient.onCreate(mContext, result);
             }
         }
 
@@ -108,6 +112,7 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
     @Override
     public void onCreate() {
         super.onCreate();
+        mContext = this;
         createNotificationChannel();
         Notification notification = getNotification(Constants.NOTIFICATION_DESC);
         startForeground(NOTIFICATION_ID, notification);
@@ -207,9 +212,8 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
                 bluetoothData.setLatitude(loc.getLatitude());
                 bluetoothData.setLongitude(loc.getLongitude());
             }
-            Toast.makeText(this, "Bluetooth Data: " + bluetoothData.toString(), Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "Bluetooth Data in BluetoothScanningService: " + bluetoothData.toString());
         }
-
     }
 
     @Override
@@ -354,6 +358,7 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
                 switch (state) {
                     case BluetoothAdapter.STATE_TURNING_OFF:
                         mGattServer.stopServer();
+                        mGattClient.onDestroy();
                         break;
 
                     case BluetoothAdapter.STATE_OFF:
