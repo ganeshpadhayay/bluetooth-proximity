@@ -14,11 +14,13 @@ import android.bluetooth.le.AdvertiseData;
 import android.bluetooth.le.AdvertiseSettings;
 import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.ParcelUuid;
 import android.util.Log;
 
 import com.example.bluetoothproximity.background.BluetoothServiceUtility;
 import com.example.bluetoothproximity.util.Constants;
+import com.example.bluetoothproximity.util.SharedPreferenceHelper;
 
 import java.util.UUID;
 
@@ -81,8 +83,9 @@ public class GattServer {
             if (defaultAdapter == null) {
                 return;
             }
-            String uniqueId = Constants.BLUETOOTH_NAME_UNIQUE_ID;
-            if (!uniqueId.equalsIgnoreCase(defaultAdapter.getName())) {
+            SharedPreferences sharedPref = mContext.getSharedPreferences(Constants.SHARED_PREF_FILE_NAME, Context.MODE_PRIVATE);
+            String uniqueId = sharedPref.getString(Constants.BLUETOOTH_NAME_UNIQUE_ID, null);
+            if (uniqueId == null || !uniqueId.equalsIgnoreCase(defaultAdapter.getName())) {
                 stopAdvertising();
             }
             defaultAdapter.setName(uniqueId);
@@ -151,12 +154,13 @@ public class GattServer {
 
         //create a characteristics
         BluetoothGattCharacteristic uniqueIdCharacteristics = new BluetoothGattCharacteristic(UUID.fromString(Constants.UNIQUE_USER_ID_UUID), BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY, BluetoothGattCharacteristic.PERMISSION_READ);
-        String uniqueUserId = Constants.BLUETOOTH_NAME_UNIQUE_ID;
+        SharedPreferences sharedPreferences = SharedPreferenceHelper.INSTANCE.getSharedPreferenceHelper();
+        String uniqueUserId = sharedPreferences.getString(Constants.BLUETOOTH_NAME_UNIQUE_ID, null);
         uniqueIdCharacteristics.setValue(uniqueUserId);
 
         //create another characteristics
         BluetoothGattCharacteristic coronaSeverityLevelCharacteristics = new BluetoothGattCharacteristic(UUID.fromString(Constants.CORONA_SEVERITY_LEVEL_UUID), BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY, BluetoothGattCharacteristic.PERMISSION_READ);
-        String coronaSeverityLevel = Constants.CORONA_SEVERITY_LEVEL;
+        String coronaSeverityLevel = sharedPreferences.getString(Constants.CORONA_SEVERITY_LEVEL, null);
         coronaSeverityLevelCharacteristics.setValue(coronaSeverityLevel);
 
         //add both characteristic to the service

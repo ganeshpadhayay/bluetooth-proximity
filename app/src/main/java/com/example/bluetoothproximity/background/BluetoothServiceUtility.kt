@@ -79,8 +79,7 @@ object BluetoothServiceUtility {
 
     fun startService(activity: Activity) {
         if (!BluetoothScanningService.serviceRunning) {
-            val uniqueId = Constants.NOTIFICATION_CHANNEL_UNIQUE_ID
-            if (uniqueId.isNotEmpty() && !activity.isFinishing) {
+            if (!activity.isFinishing) {
                 val intent = Intent(activity, BluetoothScanningService::class.java)
                 ContextCompat.startForegroundService(activity, intent)
             }

@@ -23,8 +23,7 @@ class BluetoothBackgroundWorker(context: Context, workerParams: WorkerParameters
     }
 
     private fun startService(intent: Intent) {
-        val uniqueId = Constants.NOTIFICATION_CHANNEL_UNIQUE_ID
-        if (!BluetoothScanningService.serviceRunning && uniqueId.isNotEmpty()) {
+        if (!BluetoothScanningService.serviceRunning) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 mContext.startForegroundService(intent)
             } else {

@@ -11,6 +11,8 @@ import com.example.bluetoothproximity.background.BluetoothScanningService
 import com.example.bluetoothproximity.background.BluetoothServiceUtility
 import com.example.bluetoothproximity.util.Constants
 import com.example.bluetoothproximity.util.GpsUtils
+import com.example.bluetoothproximity.util.SharedPreferenceHelper
+import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,8 +33,21 @@ class MainActivity : AppCompatActivity() {
             setBluetoothName()
         }
 
-        //check all the permissions and all
-        handlePermissionsFlow()
+        btnStartService?.setOnClickListener {
+            if (etEmployeeId.text.isNotEmpty() && etCoronaSymptoms.text.isNotEmpty()) {
+                //update values in share pref
+                val sharedPref = SharedPreferenceHelper.getSharedPreferenceHelper()
+                with(sharedPref.edit()) {
+                    putString(Constants.BLUETOOTH_NAME_UNIQUE_ID, etEmployeeId.text.toString())
+                    putString(Constants.CORONA_SEVERITY_LEVEL, etCoronaSymptoms.text.toString())
+                    apply()
+                }
+                //check all the permissions and all
+                handlePermissionsFlow()
+            } else {
+                showToast("Please fill the details first")
+            }
+        }
     }
 
     private fun handlePermissionsFlow() {
@@ -76,10 +91,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun setBluetoothName() {
         val defaultAdapter = BluetoothAdapter.getDefaultAdapter()
-        val uniqueId = Constants.BLUETOOTH_NAME_UNIQUE_ID           //this could be the username as they will always be unique
-        if (uniqueId.isNotEmpty()) {
-            if (BluetoothServiceUtility.isBluetoothPermissionAvailable(MyApplication.context) && defaultAdapter != null && uniqueId.isNotEmpty()) {
-                defaultAdapter.name = uniqueId
+        val sharedPref = SharedPreferenceHelper.getSharedPreferenceHelper()
+        val uniqueId = sharedPref.getString(Constants.BLUETOOTH_NAME_UNIQUE_ID, null)
+        uniqueId?.let {
+            if (BluetoothServiceUtility.isBluetoothPermissionAvailable(MyApplication.context) && defaultAdapter != null && it.isNotEmpty()) {
+                defaultAdapter.name = it
             }
         }
     }

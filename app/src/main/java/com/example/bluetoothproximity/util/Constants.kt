@@ -16,8 +16,9 @@ object Constants {
     const val NOTIFICATION_CHANNEL = "cor_notification_channel"
 
 
-    const val NOTIFICATION_CHANNEL_UNIQUE_ID = "121"
     const val GPS_REQUEST = 1004
-    const val BLUETOOTH_NAME_UNIQUE_ID = "B0218868"         //this to be replaced by the user_id of our users
-    const val CORONA_SEVERITY_LEVEL = "5"               //this will be determined by the form user fills
+    const val BLUETOOTH_NAME_UNIQUE_ID = "unique_user_id"
+    const val CORONA_SEVERITY_LEVEL = "corona_severity"
+
+    const val SHARED_PREF_FILE_NAME = "shared_pref_file_name"
 }
