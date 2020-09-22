@@ -15,7 +15,7 @@ class GTMController {
     }
 
     fun isAdaptiveScanEnabled(): Boolean {
-        return true
+        return false
     }
 
     fun getAdaptiveScanUpperBalancedUniqueAppDevices(): Long {

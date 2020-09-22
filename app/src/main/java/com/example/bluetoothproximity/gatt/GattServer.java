@@ -54,12 +54,14 @@ public class GattServer {
 
         @Override
         public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset, BluetoothGattCharacteristic characteristic) {
-            if (UUID.fromString(Constants.DID_UUID).equals(characteristic.getUuid())) {
+            if (UUID.fromString(Constants.UNIQUE_USER_ID_UUID).equals(characteristic.getUuid())) {
+                //here we would send the unique user id
                 mBluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, characteristic.getValue());
-            } else if (UUID.fromString(Constants.PINGER_UUID).equals(characteristic.getUuid())) {
+            } else if (UUID.fromString(Constants.CORONA_SEVERITY_LEVEL_UUID).equals(characteristic.getUuid())) {
+                //here we would send the corona severity level of the user
                 mBluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, characteristic.getValue());
             } else {
-                // Invalid characteristic
+                // Invalid characteristic, send null
                 mBluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null);
             }
         }
@@ -84,7 +86,9 @@ public class GattServer {
                 stopAdvertising();
             }
             defaultAdapter.setName(uniqueId);
+
             advertiser = defaultAdapter.getBluetoothLeAdvertiser();
+
             AdvertiseSettings.Builder settingsBuilder = new AdvertiseSettings.Builder()
                     .setAdvertiseMode(advertisementMode)
                     .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW)
@@ -96,6 +100,7 @@ public class GattServer {
                     .setIncludeDeviceName(true)
                     .addServiceUuid(pUuid)
                     .setIncludeTxPowerLevel(false).build();
+
             if (advertiser != null) {
                 try {
                     startAdvertising(settingsBuilder, data, true);
@@ -108,7 +113,6 @@ public class GattServer {
             }
         } catch (Exception ex) {
             //Reporting exception on Crashlytics if advertisement fails for other reason in devices and take corrective actions
-
         }
     }
 
@@ -117,11 +121,12 @@ public class GattServer {
         settingsBuilder.setConnectable(isConnectable);
         if (BluetoothServiceUtility.INSTANCE.isBluetoothAvailable() && advertiser != null && advertisingCallback != null) {
             advertiser.startAdvertising(settingsBuilder.build(), data, advertisingCallback);
-        } else {
-            //do nothing
         }
     }
 
+    /***
+     * adds a GATT service to our server
+     */
     public void addGattService() {
         Log.d(TAG, "in addGattService of GattServer");
         if (BluetoothServiceUtility.INSTANCE.isBluetoothAvailable() && isServerStarted()) {
@@ -133,24 +138,30 @@ public class GattServer {
         }
     }
 
+    /***
+     * We will be creating a service which will have some Characteristics which will have the data bytes that are to be
+     * transmitted
+     * @return a service
+     */
     private BluetoothGattService createGattService() {
         Log.d(TAG, "in createGattService of GattServer");
+
+        //create a service
         BluetoothGattService service = new BluetoothGattService(UUID.fromString(Constants.SERVICE_UUID), BluetoothGattService.SERVICE_TYPE_PRIMARY);
 
-        BluetoothGattCharacteristic uniqueIdChar = new BluetoothGattCharacteristic(UUID.fromString(Constants.DID_UUID),
-                BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY,
-                BluetoothGattCharacteristic.PERMISSION_READ);
-        String uniqueId = Constants.BLUETOOTH_NAME_UNIQUE_ID;
-        uniqueIdChar.setValue(uniqueId);
+        //create a characteristics
+        BluetoothGattCharacteristic uniqueIdCharacteristics = new BluetoothGattCharacteristic(UUID.fromString(Constants.UNIQUE_USER_ID_UUID), BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY, BluetoothGattCharacteristic.PERMISSION_READ);
+        String uniqueUserId = Constants.BLUETOOTH_NAME_UNIQUE_ID;
+        uniqueIdCharacteristics.setValue(uniqueUserId);
 
-        //Adding this for iOS continuous ping
-        BluetoothGattCharacteristic pingerChar = new BluetoothGattCharacteristic(UUID.fromString(Constants.PINGER_UUID),
-                BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY,
-                BluetoothGattCharacteristic.PERMISSION_READ);
-        pingerChar.setValue(String.valueOf(true));
+        //create another characteristics
+        BluetoothGattCharacteristic coronaSeverityLevelCharacteristics = new BluetoothGattCharacteristic(UUID.fromString(Constants.CORONA_SEVERITY_LEVEL_UUID), BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY, BluetoothGattCharacteristic.PERMISSION_READ);
+        String coronaSeverityLevel = Constants.CORONA_SEVERITY_LEVEL;
+        coronaSeverityLevelCharacteristics.setValue(coronaSeverityLevel);
 
-        service.addCharacteristic(uniqueIdChar);
-        service.addCharacteristic(pingerChar);
+        //add both characteristic to the service
+        service.addCharacteristic(uniqueIdCharacteristics);
+        service.addCharacteristic(coronaSeverityLevelCharacteristics);
 
         return service;
     }

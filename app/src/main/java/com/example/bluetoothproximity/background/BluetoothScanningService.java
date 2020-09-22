@@ -107,12 +107,14 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
     };
 
     public static boolean serviceRunning;
+
     private Timer timer;
 
     @Override
     public void onCreate() {
         super.onCreate();
         mContext = this;
+        //handle notification for the service
         createNotificationChannel();
         Notification notification = getNotification(Constants.NOTIFICATION_DESC);
         startForeground(NOTIFICATION_ID, notification);
@@ -135,6 +137,33 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
                 notificationManager.createNotificationChannel(channel);
             }
         }
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        super.onStartCommand(intent, flags, startId);
+        serviceRunning = true;
+
+        //configure notification which was started in onCreate()
+        configureNotification();
+
+        //init adaptive scan helper
+        mAdaptiveScanHelper = new AdaptiveScanHelper(this);
+
+        //init GATT server
+        mGattServer.onCreate(BluetoothScanningService.this);
+        mGattServer.addGattService();
+
+        //start advertisements
+        advertiseAndScan();
+        startLocationUpdate();
+
+        //register listeners
+        registerBluetoothStateListener();
+        registerLocationStateListener();
+
+        Log.d(TAG, "onStartCommand service started");
+        return START_STICKY;
     }
 
     void clearList() {
@@ -189,7 +218,7 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
             if (isBluetoothAvailable()) {
                 mBluetoothLeScanner.startScan(mScanCallback);
             } else {
-                Log.e(TAG, "startingScan failed : Bluetooth not available");
+                Log.e(TAG, "starting Scan failed : Bluetooth not available");
             }
         } catch (Exception ex) {
             //Handle Android internal exception for BT adapter not turned ON(Known Android bug)
@@ -197,13 +226,6 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
         }
     }
 
-
-    /**
-     * This method will store the detected device info into the local database to query in future if the need arise
-     * to push the data
-     *
-     * @param bluetoothModel The newly detected device nearby
-     */
     void storeDetectedUserDeviceInDB(BluetoothModel bluetoothModel) {
         if (bluetoothModel != null) {
             BluetoothData bluetoothData = new BluetoothData(bluetoothModel.getAddress(), bluetoothModel.getRssi(), bluetoothModel.getTxPower(), bluetoothModel.getTxPowerLevel());
@@ -214,22 +236,6 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
             }
             Log.d(TAG, "Bluetooth Data in BluetoothScanningService: " + bluetoothData.toString());
         }
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        super.onStartCommand(intent, flags, startId);
-        serviceRunning = true;
-        configureNotification();
-        mAdaptiveScanHelper = new AdaptiveScanHelper(this);
-        mGattServer.onCreate(BluetoothScanningService.this);
-        mGattServer.addGattService();
-        advertiseAndScan();
-        startLocationUpdate();
-        registerBluetoothStateListener();
-        registerLocationStateListener();
-        Log.d(TAG, "onStartCommand service started");
-        return START_STICKY;
     }
 
     private void configureNotification() {
@@ -268,45 +274,6 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
     private void startLocationUpdate() {
         retrieveLocationService = new RetrieveLocationService();
         retrieveLocationService.startService();
-    }
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    @Override
-    public void onDestroy() {
-        Log.d(TAG, "onDestroy");
-        super.onDestroy();
-        serviceRunning = false;
-        try {
-            if (mBluetoothStatusChangeReceiver != null) {
-                unregisterReceiver(mBluetoothStatusChangeReceiver);
-            }
-            if (mLocationChangeListener != null) {
-                unregisterReceiver(mLocationChangeListener);
-            }
-            stopForeground(true);
-            if (retrieveLocationService != null) {
-                retrieveLocationService.stopService();
-            }
-            if (mBluetoothLeScanner != null && isBluetoothAvailable()) {
-                mBluetoothLeScanner.stopScan(mScanCallback);
-            }
-            if (timer != null) {
-                timer.cancel();
-            }
-            mGattServer.onDestroy();
-            if (mAdaptiveScanHelper != null) {
-                mAdaptiveScanHelper.reset();
-            }
-        } catch (Exception ex) {
-            //As this exception doesn't matter for user,service already destroying,so just logging this on firebase
-
-        }
-
     }
 
     public static boolean isBluetoothAvailable() {
@@ -385,6 +352,44 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
         final NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (notificationManager != null) {
             notificationManager.notify(NOTIFICATION_ID, notification);
+        }
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "onDestroy");
+        super.onDestroy();
+        serviceRunning = false;
+        try {
+            if (mBluetoothStatusChangeReceiver != null) {
+                unregisterReceiver(mBluetoothStatusChangeReceiver);
+            }
+            if (mLocationChangeListener != null) {
+                unregisterReceiver(mLocationChangeListener);
+            }
+            stopForeground(true);
+            if (retrieveLocationService != null) {
+                retrieveLocationService.stopService();
+            }
+            if (mBluetoothLeScanner != null && isBluetoothAvailable()) {
+                mBluetoothLeScanner.stopScan(mScanCallback);
+            }
+            if (timer != null) {
+                timer.cancel();
+            }
+            mGattServer.onDestroy();
+            if (mAdaptiveScanHelper != null) {
+                mAdaptiveScanHelper.reset();
+            }
+        } catch (Exception ex) {
+            //As this exception doesn't matter for user,service already destroying,so just logging this on firebase
+
         }
     }
 

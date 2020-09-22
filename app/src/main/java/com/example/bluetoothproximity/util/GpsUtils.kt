@@ -16,6 +16,24 @@ class GpsUtils(private val context: Context) {
     private val mLocationSettingsRequest: LocationSettingsRequest
     private val locationManager: LocationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
+    companion object {
+        private const val TAG = "GpsUtils"
+    }
+
+    init {
+        val locationRequest = LocationRequest.create()
+        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        locationRequest.interval = 10 * 1000.toLong()
+        locationRequest.fastestInterval = 2 * 1000.toLong()
+        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+        mLocationSettingsRequest = builder.build()
+        builder.setAlwaysShow(true)
+    }
+
+    interface OnGPSStateChangeListener {
+        fun onGpsTurnedOn()
+    }
+
     fun turnGPSOn(onGPSStateChangeListener: OnGPSStateChangeListener?) {
 
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -39,23 +57,5 @@ class GpsUtils(private val context: Context) {
                         }
                     }
         }
-    }
-
-    companion object {
-        private const val TAG = "GpsUtils"
-    }
-
-    init {
-        val locationRequest = LocationRequest.create()
-        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest.interval = 10 * 1000.toLong()
-        locationRequest.fastestInterval = 2 * 1000.toLong()
-        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
-        mLocationSettingsRequest = builder.build()
-        builder.setAlwaysShow(true)
-    }
-
-    interface OnGPSStateChangeListener {
-        fun onGpsTurnedOn()
     }
 }

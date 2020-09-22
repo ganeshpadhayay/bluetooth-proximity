@@ -31,13 +31,17 @@ import static android.bluetooth.BluetoothDevice.TRANSPORT_LE;
 import static android.content.Context.BLUETOOTH_SERVICE;
 
 public class GattClient {
-
     private String TAG = "BluetoothScanningService";
+
     private BluetoothGatt mBluetoothGatt;
+
+    //the client device from where we would get the data about the client
     private BluetoothDevice mDevice;
+    //parameter of the client device
     private String txPower = "";
-    private int mRssi;
+    private int rssi;
     private String txPowerLevel = "";
+    //list of characteristics we would be receiving from the client
     private List<BluetoothGattCharacteristic> chars = new ArrayList<>();
 
     private Context mContext;
@@ -54,20 +58,18 @@ public class GattClient {
             }
         }
 
-
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-
                 BluetoothGattService service = gatt.getService(UUID.fromString(Constants.SERVICE_UUID));
                 if (service != null) {
-                    BluetoothGattCharacteristic probCharacteristic = service.getCharacteristic(UUID.fromString(Constants.PINGER_UUID));
-                    if (probCharacteristic != null) {
-                        chars.add(probCharacteristic);
+                    BluetoothGattCharacteristic coronaSeverityCharacteristics = service.getCharacteristic(UUID.fromString(Constants.CORONA_SEVERITY_LEVEL_UUID));
+                    if (coronaSeverityCharacteristics != null) {
+                        chars.add(coronaSeverityCharacteristics);
                     }
-                    BluetoothGattCharacteristic idCharacteristic = service.getCharacteristic(UUID.fromString(Constants.DID_UUID));
-                    if (idCharacteristic != null) {
-                        chars.add(idCharacteristic);
+                    BluetoothGattCharacteristic uniqueUserIdCharacteristics = service.getCharacteristic(UUID.fromString(Constants.UNIQUE_USER_ID_UUID));
+                    if (uniqueUserIdCharacteristics != null) {
+                        chars.add(uniqueUserIdCharacteristics);
                     }
                 }
                 requestCharacteristics(gatt);
@@ -84,18 +86,14 @@ public class GattClient {
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            readCounterCharacteristic(characteristic, gatt);
-        }
-
-        private void readCounterCharacteristic(BluetoothGattCharacteristic characteristic, BluetoothGatt gatt) {
             Log.d(TAG, "in readCounterCharacteristic of BluetoothGattCallback mGattCallback of GattClient");
-            if (UUID.fromString(Constants.DID_UUID).equals(characteristic.getUuid())) {
+            if (UUID.fromString(Constants.UNIQUE_USER_ID_UUID).equals(characteristic.getUuid())) {
                 byte[] data = characteristic.getValue();
                 String uniqueId = new String(data, StandardCharsets.UTF_8);
                 Log.d("GattCLient", "Unique ID - " + uniqueId);
-                BluetoothModel bluetoothModel = new BluetoothModel(uniqueId, uniqueId, mRssi, txPower, txPowerLevel);
+                BluetoothModel bluetoothModel = new BluetoothModel(uniqueId, uniqueId, rssi, txPower, txPowerLevel);
                 storeDetectedUserDeviceInDB(bluetoothModel);
-            } else if (UUID.fromString(Constants.PINGER_UUID).equals(characteristic.getUuid())) {
+            } else if (UUID.fromString(Constants.CORONA_SEVERITY_LEVEL_UUID).equals(characteristic.getUuid())) {
                 byte[] data = characteristic.getValue();
                 String uniqueId = new String(data, StandardCharsets.UTF_8);
                 Log.d("GattCLient", "Pinger ID - " + uniqueId);
@@ -111,13 +109,11 @@ public class GattClient {
 
     private void storeDetectedUserDeviceInDB(BluetoothModel bluetoothModel) {
         Location loc = MyApplication.lastKnownLocation;
-        if (loc != null) {
-            if (bluetoothModel != null) {
-                BluetoothData bluetoothData = new BluetoothData(bluetoothModel.getAddress(), bluetoothModel.getRssi(), bluetoothModel.getTxPower(), bluetoothModel.getTxPowerLevel());
-                bluetoothData.setLatitude(loc.getLatitude());
-                bluetoothData.setLongitude(loc.getLongitude());
-                Log.d(TAG, "Bluetooth Data in Gatt Client : " + bluetoothData.toString());
-            }
+        if (bluetoothModel != null) {
+            BluetoothData bluetoothData = new BluetoothData(bluetoothModel.getAddress(), bluetoothModel.getRssi(), bluetoothModel.getTxPower(), bluetoothModel.getTxPowerLevel());
+            bluetoothData.setLatitude(loc.getLatitude());
+            bluetoothData.setLongitude(loc.getLongitude());
+            Log.d(TAG, "Bluetooth Data in Gatt Client : " + bluetoothData.toString());
         }
     }
 
@@ -143,7 +139,7 @@ public class GattClient {
     public void onCreate(Context context, ScanResult result) throws RuntimeException {
         Log.d(TAG, "in onCreate of GattClient");
         mContext = context;
-        mRssi = result.getRssi();
+        rssi = result.getRssi();
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             txPower = String.valueOf(result.getTxPower());
         }
@@ -185,10 +181,6 @@ public class GattClient {
                 Log.d(TAG, "in startClient of GattClient, connecting to gatt server");
                 mBluetoothGatt = mDevice.connectGatt(mContext, false, mGattCallback);
             }
-        }
-
-        if (mBluetoothGatt == null) {
-            return;
         }
     }
 
