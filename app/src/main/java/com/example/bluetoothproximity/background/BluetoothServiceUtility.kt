@@ -15,15 +15,9 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import com.example.bluetoothproximity.MyApplication
 import com.example.bluetoothproximity.util.Constants
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 object BluetoothServiceUtility {
-
-    fun getCurrentEpochTimeInSec(): Int {
-        val dateObj = Date()
-        return (dateObj.time / 1000).toInt()
-    }
 
     fun startBackgroundWorker() {
         val workManager = WorkManager.getInstance(MyApplication.context)

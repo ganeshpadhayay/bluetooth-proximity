@@ -18,7 +18,6 @@ import android.os.Build;
 import android.util.Log;
 
 import com.example.bluetoothproximity.MyApplication;
-import com.example.bluetoothproximity.beans.BluetoothData;
 import com.example.bluetoothproximity.beans.BluetoothModel;
 import com.example.bluetoothproximity.util.Constants;
 
@@ -41,6 +40,7 @@ public class GattClient {
     private String txPower = "";
     private int rssi;
     private String txPowerLevel = "";
+    private String uniqueId = "";
     //list of characteristics we would be receiving from the client
     private List<BluetoothGattCharacteristic> chars = new ArrayList<>();
 
@@ -67,10 +67,6 @@ public class GattClient {
                     if (coronaSeverityCharacteristics != null) {
                         chars.add(coronaSeverityCharacteristics);
                     }
-                    BluetoothGattCharacteristic uniqueUserIdCharacteristics = service.getCharacteristic(UUID.fromString(Constants.UNIQUE_USER_ID_UUID));
-                    if (uniqueUserIdCharacteristics != null) {
-                        chars.add(uniqueUserIdCharacteristics);
-                    }
                 }
                 requestCharacteristics(gatt);
             } else {
@@ -87,16 +83,11 @@ public class GattClient {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             Log.d(TAG, "in readCounterCharacteristic of BluetoothGattCallback mGattCallback of GattClient");
-            if (UUID.fromString(Constants.UNIQUE_USER_ID_UUID).equals(characteristic.getUuid())) {
+            if (UUID.fromString(Constants.CORONA_SEVERITY_LEVEL_UUID).equals(characteristic.getUuid())) {
                 byte[] data = characteristic.getValue();
-                String uniqueId = new String(data, StandardCharsets.UTF_8);
-                Log.d("GattCLient", "Unique ID - " + uniqueId);
-                BluetoothModel bluetoothModel = new BluetoothModel(uniqueId, uniqueId, rssi, txPower, txPowerLevel);
+                String coronaLevel = new String(data, StandardCharsets.UTF_8);
+                BluetoothModel bluetoothModel = new BluetoothModel(uniqueId, coronaLevel, rssi, txPower, txPowerLevel, null, null);
                 storeDetectedUserDeviceInDB(bluetoothModel);
-            } else if (UUID.fromString(Constants.CORONA_SEVERITY_LEVEL_UUID).equals(characteristic.getUuid())) {
-                byte[] data = characteristic.getValue();
-                String uniqueId = new String(data, StandardCharsets.UTF_8);
-                Log.d("GattCLient", "Pinger ID - " + uniqueId);
             }
             chars.remove(chars.get(chars.size() - 1));
             if (chars.size() > 0) {
@@ -109,12 +100,11 @@ public class GattClient {
 
     private void storeDetectedUserDeviceInDB(BluetoothModel bluetoothModel) {
         Location loc = MyApplication.lastKnownLocation;
-        if (bluetoothModel != null) {
-            BluetoothData bluetoothData = new BluetoothData(bluetoothModel.getAddress(), bluetoothModel.getRssi(), bluetoothModel.getTxPower(), bluetoothModel.getTxPowerLevel());
-            bluetoothData.setLatitude(loc.getLatitude());
-            bluetoothData.setLongitude(loc.getLongitude());
-            Log.d(TAG, "Bluetooth Data in Gatt Client : " + bluetoothData.toString());
+        if (loc != null) {
+            bluetoothModel.setLongitude(loc.getLongitude());
+            bluetoothModel.setLattitude(loc.getLatitude());
         }
+        Log.d(TAG, "Bluetooth Data in Gatt Client : " + bluetoothModel.toString());
     }
 
     private final BroadcastReceiver mBluetoothReceiver = new BroadcastReceiver() {
@@ -145,6 +135,9 @@ public class GattClient {
         }
         if (result.getScanRecord() != null) {
             txPowerLevel = String.valueOf(result.getScanRecord().getTxPowerLevel());
+        }
+        if (result.getDevice() != null && result.getDevice().getName() != null) {
+            uniqueId = result.getDevice().getName();
         }
         mBluetoothManager = (BluetoothManager) context.getSystemService(BLUETOOTH_SERVICE);
         if (mBluetoothManager != null) {

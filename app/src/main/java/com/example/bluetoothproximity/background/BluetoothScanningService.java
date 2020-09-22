@@ -27,7 +27,6 @@ import androidx.core.app.NotificationCompat;
 import com.example.bluetoothproximity.MainActivity;
 import com.example.bluetoothproximity.MyApplication;
 import com.example.bluetoothproximity.R;
-import com.example.bluetoothproximity.beans.BluetoothData;
 import com.example.bluetoothproximity.beans.BluetoothModel;
 import com.example.bluetoothproximity.gatt.GattClient;
 import com.example.bluetoothproximity.gatt.GattServer;
@@ -85,7 +84,7 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
                 if (result.getScanRecord() != null) {
                     txPowerLevel = String.valueOf(result.getScanRecord().getTxPowerLevel());
                 }
-                BluetoothModel bluetoothModel = new BluetoothModel(result.getDevice().getName(), deviceName, result.getRssi(), txPower, txPowerLevel);
+                BluetoothModel bluetoothModel = new BluetoothModel(result.getDevice().getName(), "-1", result.getRssi(), txPower, txPowerLevel, null, null);
                 mData.add(deviceName);
                 storeDetectedUserDeviceInDB(bluetoothModel);
                 Log.d(TAG, "onScanResult : Information Updated, Device : " + deviceName);
@@ -227,15 +226,12 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
     }
 
     void storeDetectedUserDeviceInDB(BluetoothModel bluetoothModel) {
-        if (bluetoothModel != null) {
-            BluetoothData bluetoothData = new BluetoothData(bluetoothModel.getAddress(), bluetoothModel.getRssi(), bluetoothModel.getTxPower(), bluetoothModel.getTxPowerLevel());
-            Location loc = MyApplication.lastKnownLocation;
-            if (loc != null) {
-                bluetoothData.setLatitude(loc.getLatitude());
-                bluetoothData.setLongitude(loc.getLongitude());
-            }
-            Log.d(TAG, "Bluetooth Data in BluetoothScanningService: " + bluetoothData.toString());
+        Location loc = MyApplication.lastKnownLocation;
+        if (loc != null) {
+            bluetoothModel.setLongitude(loc.getLongitude());
+            bluetoothModel.setLattitude(loc.getLatitude());
         }
+        Log.d(TAG, "Bluetooth Data in BluetoothScanningService : " + bluetoothModel.toString());
     }
 
     private void configureNotification() {

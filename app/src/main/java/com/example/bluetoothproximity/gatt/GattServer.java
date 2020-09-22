@@ -56,10 +56,7 @@ public class GattServer {
 
         @Override
         public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset, BluetoothGattCharacteristic characteristic) {
-            if (UUID.fromString(Constants.UNIQUE_USER_ID_UUID).equals(characteristic.getUuid())) {
-                //here we would send the unique user id
-                mBluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, characteristic.getValue());
-            } else if (UUID.fromString(Constants.CORONA_SEVERITY_LEVEL_UUID).equals(characteristic.getUuid())) {
+            if (UUID.fromString(Constants.CORONA_SEVERITY_LEVEL_UUID).equals(characteristic.getUuid())) {
                 //here we would send the corona severity level of the user
                 mBluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, characteristic.getValue());
             } else {
@@ -148,23 +145,18 @@ public class GattServer {
      */
     private BluetoothGattService createGattService() {
         Log.d(TAG, "in createGattService of GattServer");
+        SharedPreferences sharedPreferences = SharedPreferenceHelper.INSTANCE.getSharedPreferenceHelper();
 
         //create a service
         BluetoothGattService service = new BluetoothGattService(UUID.fromString(Constants.SERVICE_UUID), BluetoothGattService.SERVICE_TYPE_PRIMARY);
 
-        //create a characteristics
-        BluetoothGattCharacteristic uniqueIdCharacteristics = new BluetoothGattCharacteristic(UUID.fromString(Constants.UNIQUE_USER_ID_UUID), BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY, BluetoothGattCharacteristic.PERMISSION_READ);
-        SharedPreferences sharedPreferences = SharedPreferenceHelper.INSTANCE.getSharedPreferenceHelper();
-        String uniqueUserId = sharedPreferences.getString(Constants.BLUETOOTH_NAME_UNIQUE_ID, null);
-        uniqueIdCharacteristics.setValue(uniqueUserId);
-
-        //create another characteristics
+        //create  characteristics
         BluetoothGattCharacteristic coronaSeverityLevelCharacteristics = new BluetoothGattCharacteristic(UUID.fromString(Constants.CORONA_SEVERITY_LEVEL_UUID), BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY, BluetoothGattCharacteristic.PERMISSION_READ);
         String coronaSeverityLevel = sharedPreferences.getString(Constants.CORONA_SEVERITY_LEVEL, null);
-        coronaSeverityLevelCharacteristics.setValue(coronaSeverityLevel);
+        String uniqueUserId = sharedPreferences.getString(Constants.BLUETOOTH_NAME_UNIQUE_ID, null);
+        coronaSeverityLevelCharacteristics.setValue(uniqueUserId + "&" + coronaSeverityLevel);
 
-        //add both characteristic to the service
-        service.addCharacteristic(uniqueIdCharacteristics);
+        //add characteristic to the service
         service.addCharacteristic(coronaSeverityLevelCharacteristics);
 
         return service;

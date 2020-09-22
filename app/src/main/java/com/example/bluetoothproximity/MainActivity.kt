@@ -1,10 +1,14 @@
 package com.example.bluetoothproximity
 
+import android.app.Activity
 import android.bluetooth.BluetoothAdapter
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.view.Window
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.bluetoothproximity.background.BluetoothScanningService
@@ -25,16 +29,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        //check if the device's bluetooth iw working or not, if working then set a name
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-        if (bluetoothAdapter == null) {
-            showToast("No Bluetooth on this handset")
-        } else {
-            setBluetoothName()
-        }
-
         btnStartService?.setOnClickListener {
             if (etEmployeeId.text.isNotEmpty() && etCoronaSymptoms.text.isNotEmpty()) {
+                hideKeyboard(this.window, this)
+
                 //update values in share pref
                 val sharedPref = SharedPreferenceHelper.getSharedPreferenceHelper()
                 with(sharedPref.edit()) {
@@ -42,6 +40,13 @@ class MainActivity : AppCompatActivity() {
                     putString(Constants.CORONA_SEVERITY_LEVEL, etCoronaSymptoms.text.toString())
                     apply()
                 }
+
+                //check if the device's bluetooth is working or not, if working then set a name
+                bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+                if (bluetoothAdapter == null) {
+                    showToast("No Bluetooth on this handset")
+                }
+
                 //check all the permissions and all
                 handlePermissionsFlow()
             } else {
@@ -89,17 +94,6 @@ class MainActivity : AppCompatActivity() {
         BluetoothServiceUtility.startBackgroundWorker()
     }
 
-    private fun setBluetoothName() {
-        val defaultAdapter = BluetoothAdapter.getDefaultAdapter()
-        val sharedPref = SharedPreferenceHelper.getSharedPreferenceHelper()
-        val uniqueId = sharedPref.getString(Constants.BLUETOOTH_NAME_UNIQUE_ID, null)
-        uniqueId?.let {
-            if (BluetoothServiceUtility.isBluetoothPermissionAvailable(MyApplication.context) && defaultAdapter != null && it.isNotEmpty()) {
-                defaultAdapter.name = it
-            }
-        }
-    }
-
     private fun makeBluetoothDiscoverable() {
         try {
             val discoverableIntent: Intent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply { putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300000) }
@@ -134,5 +128,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun showToast(message: String, interval: Int = Toast.LENGTH_SHORT) {
         Toast.makeText(this, message, interval).show()
+    }
+
+    private fun hideKeyboard(window: Window, context: Context) {
+        try {
+            val focusView = window.currentFocus
+            val imm = context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+            focusView?.let {
+                imm.hideSoftInputFromWindow(it.windowToken, 0)
+            }
+        } catch (e: Exception) {
+        }
     }
 }

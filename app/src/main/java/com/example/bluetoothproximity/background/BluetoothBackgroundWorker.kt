@@ -12,6 +12,10 @@ class BluetoothBackgroundWorker(context: Context, workerParams: WorkerParameters
 
     private val mContext: Context = context
 
+    companion object {
+        val UNIQUE_WORK_NAME = "BackgroundWorker"
+    }
+
     override fun doWork(): Result {
         val intent = Intent(mContext, BluetoothScanningService::class.java)
         intent.putExtra(Constants.FROM_MY_WORKER, true)
@@ -30,9 +34,5 @@ class BluetoothBackgroundWorker(context: Context, workerParams: WorkerParameters
                 mContext.startService(intent)
             }
         }
-    }
-
-    companion object {
-        val UNIQUE_WORK_NAME = "BackgroundWorker"
     }
 }

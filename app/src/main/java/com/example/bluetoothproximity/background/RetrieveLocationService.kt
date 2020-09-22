@@ -5,11 +5,10 @@ import android.content.pm.PackageManager
 import android.os.Looper
 import androidx.core.app.ActivityCompat
 import com.example.bluetoothproximity.MyApplication
-import com.example.bluetoothproximity.beans.BluetoothData
-import com.example.bluetoothproximity.util.Constants
 import com.google.android.gms.location.*
 
 class RetrieveLocationService {
+
     companion object {
         private const val UPDATE_INTERVAL: Long = 30 * 60 * 1000  /* 30 min */
         private const val FASTEST_INTERVAL: Long = 5 * 60 * 1000 /* 5 min */
@@ -20,21 +19,15 @@ class RetrieveLocationService {
     private val context = MyApplication.context
     private var isServiceRunning = false
 
-
     private var locationCallback: LocationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult?) {
-
             locationResult?.let {
                 if (it.lastLocation != null) {
-                    val usersLocationData = BluetoothData(Constants.EMPTY, 0, Constants.EMPTY, Constants.EMPTY)
-                    usersLocationData.latitude = it.lastLocation.latitude
-                    usersLocationData.longitude = it.lastLocation.longitude
                     MyApplication.setLocation(it.lastLocation)
                 }
             }
         }
     }
-
 
     fun startService() {
         if (isServiceRunning) {
@@ -43,7 +36,6 @@ class RetrieveLocationService {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
         getLocation()
     }
-
 
     private fun getLocation() {
         // Create the location request to start receiving updates
@@ -67,5 +59,4 @@ class RetrieveLocationService {
             }
         }
     }
-
 }
