@@ -68,13 +68,11 @@ public class GattServer {
 
 
     public void onCreate(Context context) throws RuntimeException {
-        Log.d(TAG, "in onCreate of GattServer");
         mContext = context;
         mBluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
     }
 
     public void advertise(int advertisementMode) {
-        Log.d(TAG, "in advertise of GattServer");
         try {
             BluetoothAdapter defaultAdapter = BluetoothAdapter.getDefaultAdapter();
             if (defaultAdapter == null) {
@@ -117,7 +115,6 @@ public class GattServer {
     }
 
     private void startAdvertising(AdvertiseSettings.Builder settingsBuilder, AdvertiseData data, boolean isConnectable) {
-        Log.d(TAG, "in startAdvertising of GattServer");
         settingsBuilder.setConnectable(isConnectable);
         if (BluetoothServiceUtility.INSTANCE.isBluetoothAvailable() && advertiser != null && advertisingCallback != null) {
             advertiser.startAdvertising(settingsBuilder.build(), data, advertisingCallback);
@@ -128,7 +125,6 @@ public class GattServer {
      * adds a GATT service to our server
      */
     public void addGattService() {
-        Log.d(TAG, "in addGattService of GattServer");
         if (BluetoothServiceUtility.INSTANCE.isBluetoothAvailable() && isServerStarted()) {
             try {
                 mBluetoothGattServer.addService(createGattService());
@@ -144,7 +140,6 @@ public class GattServer {
      * @return a service
      */
     private BluetoothGattService createGattService() {
-        Log.d(TAG, "in createGattService of GattServer");
         SharedPreferences sharedPreferences = SharedPreferenceHelper.INSTANCE.getSharedPreferenceHelper();
 
         //create a service
@@ -173,7 +168,6 @@ public class GattServer {
     }
 
     public void stopServer() {
-        Log.d(TAG, "in stopServer of GattServer");
         try {
             if (mBluetoothGattServer != null) {
                 mBluetoothGattServer.clearServices();
@@ -196,7 +190,6 @@ public class GattServer {
     }
 
     public void stopAdvertising() {
-        Log.d(TAG, "in stopAdvertising of GattServer");
         try {
             if (advertiser != null) {
                 advertiser.stopAdvertising(advertisingCallback);

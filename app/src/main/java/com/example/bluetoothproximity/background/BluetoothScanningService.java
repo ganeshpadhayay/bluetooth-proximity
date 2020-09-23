@@ -87,7 +87,8 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
                 BluetoothModel bluetoothModel = new BluetoothModel(result.getDevice().getName(), "-1", result.getRssi(), txPower, txPowerLevel, null, null);
                 mData.add(deviceName);
                 storeDetectedUserDeviceInDB(bluetoothModel);
-                Log.d(TAG, "onScanResult : Information Updated, Device : " + deviceName);
+
+                //create a client with this result device as a server
                 mGattClient.onCreate(mContext, result);
             }
         }
@@ -161,7 +162,6 @@ public class BluetoothScanningService extends Service implements AdaptiveScanHel
         registerBluetoothStateListener();
         registerLocationStateListener();
 
-        Log.d(TAG, "onStartCommand service started");
         return START_STICKY;
     }
 

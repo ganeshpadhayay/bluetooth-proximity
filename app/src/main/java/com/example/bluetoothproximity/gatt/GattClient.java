@@ -82,7 +82,6 @@ public class GattClient {
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            Log.d(TAG, "in readCounterCharacteristic of BluetoothGattCallback mGattCallback of GattClient");
             if (UUID.fromString(Constants.CORONA_SEVERITY_LEVEL_UUID).equals(characteristic.getUuid())) {
                 byte[] data = characteristic.getValue();
                 String coronaLevel = new String(data, StandardCharsets.UTF_8);
@@ -110,7 +109,6 @@ public class GattClient {
     private final BroadcastReceiver mBluetoothReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "in onReceive of BroadcastReceiver mBluetoothReceiver of GattClient");
             int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.STATE_OFF);
             switch (state) {
                 case BluetoothAdapter.STATE_ON:
@@ -127,7 +125,6 @@ public class GattClient {
     };
 
     public void onCreate(Context context, ScanResult result) throws RuntimeException {
-        Log.d(TAG, "in onCreate of GattClient");
         mContext = context;
         rssi = result.getRssi();
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -149,7 +146,6 @@ public class GattClient {
     }
 
     private void configureClient(ScanResult result) {
-        Log.d(TAG, "in configureClient of GattClient, result: " + result);
         if (!mBluetoothAdapter.isEnabled()) {
             mBluetoothAdapter.enable();
         } else {
@@ -159,13 +155,11 @@ public class GattClient {
     }
 
     private void registerReceiver() {
-        Log.d(TAG, "in registerReceiver of GattClient");
         IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         mContext.registerReceiver(mBluetoothReceiver, filter);
     }
 
     private void startClient() {
-        Log.d(TAG, "in startClient of GattClient");
         if (mDevice != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 Log.d(TAG, "in startClient of GattClient, connecting to gatt server");
@@ -178,7 +172,6 @@ public class GattClient {
     }
 
     private void stopClient() {
-        Log.d(TAG, "in stopClient of GattClient");
         if (mBluetoothGatt != null) {
             mBluetoothGatt.close();
             mBluetoothGatt = null;
@@ -186,7 +179,6 @@ public class GattClient {
     }
 
     public void onDestroy() {
-        Log.d(TAG, "in onDestroy of GattClient");
         if (mContext != null) {
             mBluetoothManager = (BluetoothManager) mContext.getSystemService(BLUETOOTH_SERVICE);
             BluetoothAdapter bluetoothAdapter;
